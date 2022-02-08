@@ -1,6 +1,8 @@
 import './css/styles.css';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import { fetchImages } from './fetchImages';
+import { page } from './fetchImages';
+import { resetPage } from './fetchImages';
 export const API_KEY = '25611286-d3301de9845eb7113c68c548e';
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
@@ -8,13 +10,18 @@ import 'simplelightbox/dist/simple-lightbox.min.css';
 const refs = {
   input: document.querySelector('.search-form'),
   gallery: document.querySelector('.gallery'),
+  loadMoreBtn: document.querySelector('.load-more'),
 };
+let request = '';
 
+// refs.loadMoreBtn.addEventListener('click', formGetInput);
 refs.input.addEventListener('submit', formGetInput);
 
 function formGetInput(e) {
   e.preventDefault();
-  const request = refs.input.searchQuery.value;
+  refs.gallery.innerHTML = '';
+  resetPage();
+  request = refs.input.searchQuery.value;
   getInputApi(request);
 }
 
@@ -23,9 +30,14 @@ async function getInputApi(request) {
   // console.log('~ responseFromApi', responseFromApi);
   makeGallery(responseFromApi);
 }
+
 function makeGallery(images) {
+  const totalHits = images.data.totalHits;
+  alerts(totalHits);
+
+  console.log('~ totalHits', totalHits);
   const arrayImg = images.data.hits;
-  console.log('~ arrayImg', arrayImg);
+  // console.log('~ arrayImg', arrayImg);
   const marcup = arrayImg
     .map(
       ({ webformatURL, largeImageURL, tags, likes, views, comments, downloads }) =>
@@ -36,12 +48,36 @@ function makeGallery(images) {
   renderGallery(marcup);
 }
 function renderGallery(markup) {
-  refs.gallery.insertAdjacentHTML('afterbegin', markup);
+  refs.gallery.insertAdjacentHTML('beforeend', markup);
 
-  const lightbox = new SimpleLightbox('.gallery__item', {
-    captionsData: 'alt',
-    captionDelay: 250,
-  });
+  const lightbox = new SimpleLightbox('.gallery__item');
+  lightbox.refresh();
+}
+
+window.addEventListener('scroll', () => {
+  if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight) {
+    getInputApi(request);
+  }
+});
+
+function alerts(totalHits) {
+  const totalImages = (page - 2) * 40;
+  console.log('~ page', page);
+  console.log('~ totalImages', totalImages);
+  if (totalHits === 0) {
+    return Notify.failure(
+      `Sorry, there are no images matching your search query. Please try again.`,
+    );
+  }
+
+  if (totalHits / totalImages <= 1) {
+    console.log('~ page', page);
+    return Notify.failure(`We're sorry, but you've reached the end of search results.`);
+  }
+
+  if (page === 2) {
+    return Notify.success(`Hooray! We found ${totalHits} images.`);
+  }
 }
 // webformatURL - ссылка на маленькое изображение для списка карточек.
 // largeImageURL - ссылка на большое изображение.
