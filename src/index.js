@@ -46,7 +46,7 @@ const lightbox = new SimpleLightbox('.gallery__item');
 
 function renderGallery(markup) {
   refs.gallery.insertAdjacentHTML('beforeend', markup);
-
+  pageScroll();
   lightbox.refresh();
 }
 
@@ -76,3 +76,14 @@ window.addEventListener('scroll', () => {
     getInputApi(request, imgPage);
   }
 });
+
+function pageScroll() {
+  if (imgPage === 1) {
+    const { height: formHeight } = refs.input.getBoundingClientRect();
+
+    window.scrollBy({
+      top: formHeight * 1.5,
+      behavior: 'smooth',
+    });
+  }
+}
