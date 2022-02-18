@@ -22,12 +22,17 @@ function formGetInput(e) {
   imgPage = 1;
   request = refs.input.searchQuery.value;
   getInputApi(request, imgPage);
+  window.addEventListener('scroll', scrollListener);
 }
 
 async function getInputApi(request, page) {
-  const responseFromApi = await fetchImages(request, page);
-  makeGallery(responseFromApi);
-  imgPage += 1;
+  try {
+    const responseFromApi = await fetchImages(request, page);
+    makeGallery(responseFromApi);
+    imgPage += 1;
+  } catch (error) {
+    console.error('Ошибочка', error);
+  }
 }
 
 function makeGallery(images) {
@@ -60,6 +65,7 @@ function alerts(totalHits) {
 
   if (totalHits / totalImages <= 1) {
     console.log('~ page', imgPage);
+    window.removeEventListener('scroll', scrollListener);
     return Notify.failure(`We're sorry, but you've reached the end of search results.`);
   }
 
@@ -68,14 +74,16 @@ function alerts(totalHits) {
   }
 }
 
-window.addEventListener('scroll', () => {
+window.addEventListener('scroll', scrollListener);
+
+function scrollListener() {
   if (
     window.scrollY + window.innerHeight - document.documentElement.scrollHeight < 1 &&
     window.scrollY + window.innerHeight - document.documentElement.scrollHeight > -1
   ) {
     getInputApi(request, imgPage);
   }
-});
+}
 
 function pageScroll() {
   if (imgPage === 1) {
